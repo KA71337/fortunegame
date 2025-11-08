@@ -1,51 +1,44 @@
-// ===== FortuneGame Server =====
+// ===== FortuneGame Server (для Render + Netlify) =====
 
 // Импортируем зависимости
 const http = require("http");
 const WebSocket = require("ws");
-const fs = require("fs");
-const path = require("path");
 
-// Создаём HTTP-сервер (чтобы Render видел, что сервер жив)
+// Создаём HTTP-сервер (Render требует, чтобы он что-то отвечал)
 const server = http.createServer((req, res) => {
-  if (req.url === "/" || req.url === "/index.html") {
-    // Простой ответ при заходе на сайт
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end("<h2>✅ FortuneGame сервер работает!</h2>");
-  } else {
-    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-    res.end("Not Found");
-  }
+  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+  res.end("✅ FortuneGame server is running!\n");
 });
 
-// Создаём WebSocket-сервер
+// Создаём WebSocket-сервер на базе HTTP
 const wss = new WebSocket.Server({ server });
 
-// Хранилище игроков и балансов
+// Хранилище игроков и их балансов
 let users = {}; // { name: { balance: number, ws: WebSocket } }
 
-// Обработка подключений
+// Обработка новых подключений
 wss.on("connection", (ws) => {
   console.log("🔗 Новый игрок подключился!");
 
-  ws.on("message", (message) => {
+  ws.on("message", (msg) => {
     try {
-      const data = JSON.parse(message);
+      const data = JSON.parse(msg);
 
-      // === Регистрация пользователя ===
+      // === Регистрация ===
       if (data.type === "register") {
         const name = data.name.trim();
 
-        // Проверяем, занято ли имя
+        // Проверяем, не занято ли имя
         if (users[name]) {
           ws.send(JSON.stringify({ type: "error", message: "Имя уже занято!" }));
           return;
         }
 
+        // Сохраняем пользователя
         users[name] = { balance: 0, ws };
         ws.playerName = name;
 
-        console.log(`✅ Зарегистрировался ${name}`);
+        console.log(`✅ Игрок зарегистрировался: ${name}`);
         ws.send(JSON.stringify({ type: "registered", name, balance: 0 }));
       }
 
@@ -57,7 +50,7 @@ wss.on("connection", (ws) => {
         }
       }
 
-      // === Пополнение (только владелец OWNER) ===
+      // === Пополнение (только OWNER) ===
       if (data.type === "addBalance" && ws.playerName === "OWNER") {
         const { target, amount } = data;
         if (users[target]) {
@@ -98,11 +91,10 @@ wss.on("connection", (ws) => {
   });
 });
 
-// Запускаем сервер
+// ===== Запуск сервера =====
 const PORT = process.env.PORT || 8080;
-server.listen(PORT, '0.0.0.0', () => {
+
+// 0.0.0.0 нужно для Render, чтобы порт был виден извне
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 FortuneGame сервер запущен на порту ${PORT}`);
 });
-
-});
-
