@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fortune Game</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Poppins',sans-serif;
+      background:radial-gradient(circle at top,#fff7e6,#f5f5f5);
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      overflow:hidden;
+      color:#222;
+    }
+    .game-container {
+      position:relative;
+      width:100%;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+    }
+    .top-bar {
+      position:absolute;
+      top:18px;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(1180px,94%);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:16px;
+      color:#333;
+      font-weight:600;
+      z-index:5;
+    }
+    .btn {
+      background:linear-gradient(135deg,#ffa726,#fb8c00);
+      border:none;
+      border-radius:999px;
+      padding:9px 24px;
+      color:#fff;
+      font-size:15px;
+      font-weight:600;
+      cursor:pointer;
+      transition:all 0.25s ease;
+      box-shadow:0 7px 18px rgba(251,140,0,0.3);
+      white-space:nowrap;
+    }
+    .btn:hover {
+      background:linear-gradient(135deg,#fb8c00,#ef6c00);
+      transform:translateY(-1px);
+      box-shadow:0 10px 24px rgba(251,140,0,0.4);
+    }
+    .profile-btn { padding-inline:30px; }
+    .balance-box {
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .coin-icon {
+      width:22px;
+      height:22px;
+      border-radius:50%;
+      border:2px solid #ffb74d;
+      box-shadow:inset 0 0 6px rgba(0,0,0,0.15);
+      position:relative;
+    }
+    .coin-icon::after {
+      content:'₳';
+      position:absolute;
+      font-size:14px;
+      top:50%; left:50%;
+      transform:translate(-50%,-52%);
+      color:#ff9800;
+      font-weight:700;
+    }
+    .fortune-wrapper {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:18px;
+      margin-top:70px;
+    }
+    .fortune-wheel {
+      width:min(430px,80vw);
+      height:min(430px,80vw);
+      border-radius:50%;
+      border:8px solid #ffb74d;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:conic-gradient(
+        #ffcc80 0deg 60deg,
+        #ffe0b2 60deg 120deg,
+        #fff3e0 120deg 180deg,
+        #ffb74d 180deg 240deg,
+        #ffd180 240deg 300deg,
+        #ffe0b2 300deg 360deg
+      );
+      box-shadow:0 18px 40px rgba(0,0,0,0.18);
+      position:relative;
+      transition:transform 4s ease-out;
+    }
+    .fortune-wheel::after {
+      content:'';
+      position:absolute;
+      width:40px;
+      height:40px;
+      background:#fb8c00;
+      border-radius:50%;
+      box-shadow:0 0 12px rgba(0,0,0,0.35);
+      z-index:3;
+    }
+    .pointer {
+      position:absolute;
+      top:-12px;
+      left:50%;
+      transform:translateX(-50%);
+      width:0;
+      height:0;
+      border-left:14px solid transparent;
+      border-right:14px solid transparent;
+      border-bottom:22px solid #fb8c00;
+      z-index:4;
+      filter:drop-shadow(0 3px 4px rgba(0,0,0,0.35));
+    }
+    .players-list {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:8px;
+      max-width:520px;
+      font-size:13px;
+    }
+    .player-tag {
+      padding:4px 10px;
+      border-radius:999px;
+      color:#fff;
+      font-weight:600;
+    }
+    .status-text {
+      font-size:14px;
+      color:#666;
+      min-height:18px;
+    }
+    .popup {
+      position:fixed;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      background:#fff;
+      border-radius:24px;
+      box-shadow:0 16px 40px rgba(0,0,0,0.25);
+      padding:26px 26px 22px;
+      text-align:center;
+      width:min(340px,90vw);
+      display:none;
+      z-index:20;
+    }
+    .popup h2 { margin-bottom:14px; font-size:20px; color:#222; }
+    .popup p { font-size:13px; color:#555; margin-bottom:14px; }
+    .popup input {
+      width:90%;
+      padding:10px;
+      border-radius:16px;
+      border:1px solid #e0e0e0;
+      margin-bottom:10px;
+      text-align:center;
+      font-size:14px;
+      outline:none;
+      transition:0.2s;
+    }
+    .popup input:focus {
+      border-color:#ffa726;
+      box-shadow:0 0 8px rgba(255,167,38,0.25);
+    }
+    .popup-actions {
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin-top:4px;
+    }
+    .popup .btn {
+      padding-inline:16px;
+      font-size:14px;
+      box-shadow:0 7px 16px rgba(251,140,0,0.28);
+    }
+    .overlay {
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.35);
+      display:none;
+      z-index:10;
+    }
+    .admin-panel {
+      position:absolute;
+      left:18px;
+      bottom:18px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      z-index:6;
+    }
+    .admin-label {
+      font-size:11px;
+      color:#ff9800;
+      font-weight:600;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      margin-bottom:3px;
+    }
+    .start-btn { margin-top:4px; padding-inline:30px; align-self:flex-start; }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="game-container">
+    <div class="top-bar">
+      <button class="btn profile-btn" id="profileBtn">ПРОФИЛЬ</button>
+      <div class="balance-box">
+        <div class="coin-icon"></div>
+        <div><span id="balanceValue">0.00</span> AZN</div>
+        <button class="btn" id="depositInfoBtn">Пополнить</button>
+      </div>
+    </div>
+
+    <div class="fortune-wrapper">
+      <div class="pointer"></div>
+      <div class="fortune-wheel" id="wheel"></div>
+
+      <div class="players-list" id="playersList"></div>
+      <div class="status-text" id="statusText"></div>
+
+      <button class="btn" id="betBtn">Сделать ставку</button>
+    </div>
+
+    <div class="admin-panel" id="adminPanel" style="display:none;">
+      <div class="admin-label">OWNER PANEL</div>
+      <button class="btn" id="addBalanceBtn">Пополнить баланс</button>
+      <button class="btn" id="subBalanceBtn">Вычесть баланс</button>
+      <button class="btn start-btn" id="startGameBtn">НАЧАТЬ</button>
+    </div>
+  </div>
+
+  <!-- POPUPS -->
+  <div class="popup" id="profilePopup">
+    <h2>Профиль</h2>
+    <p id="profileName"></p>
+    <p id="profileBalance"></p>
+    <p id="profileHistory">История игр пока пуста.</p>
+    <div class="popup-actions">
+      <button class="btn" id="profileBackBtn">Назад</button>
+    </div>
+  </div>
+
+  <div class="popup" id="depositPopup">
+    <h2>Пополнение</h2>
+    <p>Для пополнения баланса<br>напишите владельцу сайта (OWNER).</p>
+    <div class="popup-actions">
+      <button class="btn" id="depositBackBtn">Назад</button>
+    </div>
+  </div>
+
+  <div class="popup" id="betPopup">
+    <h2>Ставка</h2>
+    <p>Введите сумму ставки (AZN).</p>
+    <input type="number" id="betAmount" min="0.01" step="0.01" placeholder="Например, 0.20">
+    <div class="popup-actions">
+      <button class="btn" id="betOkBtn">OK</button>
+      <button class="btn" id="betCancelBtn">Отмена</button>
+    </div>
+  </div>
+
+  <div class="popup" id="editBalancePopup">
+    <h2 id="editTitle">Изменить баланс</h2>
+    <p>Укажите точное имя и сумму.</p>
+    <input type="text" id="editUserName" placeholder="Имя игрока">
+    <input type="number" id="editAmount" min="0.01" step="0.01" placeholder="Сумма">
+    <div class="popup-actions">
+      <button class="btn" id="editOkBtn">OK</button>
+      <button class="btn" id="editCancelBtn">Отмена</button>
+    </div>
+  </div>
+
+  <script>
+    const WS_URL = 'wss://fortunegame.onrender.com';
+
+    const username = localStorage.getItem('username');
+    if (!username) {
+      window.location.href = 'index.html';
+    }
+
+    const wheel = document.getElementById('wheel');
+    const playersList = document.getElementById('playersList');
+    const statusText = document.getElementById('statusText');
+    const balanceValue = document.getElementById('balanceValue');
+    const adminPanel = document.getElementById('adminPanel');
+    const overlay = document.getElementById('overlay');
+
+    const profilePopup = document.getElementById('profilePopup');
+    const depositPopup = document.getElementById('depositPopup');
+    const betPopup = document.getElementById('betPopup');
+    const editBalancePopup = document.getElementById('editBalancePopup');
+
+    const betAmountInput = document.getElementById('betAmount');
+
+    let ws;
+    let state = { users: {}, round: { players: [], status:'collecting' } };
+    let you = null;
+    let isOwner = false;
+    let lastSpinId = 0;
+
+    function openPopup(el) {
+      overlay.style.display = 'block';
+      el.style.display = 'block';
+    }
+    function closePopup(el) {
+      el.style.display = 'none';
+      overlay.style.display = 'none';
+    }
+
+    // Подключаемся к серверу
+    function connect() {
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: 'join',
+          username
+        }));
+      };
+
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+
+        if (msg.type === 'error') {
+          alert(msg.message || 'Ошибка');
+        }
+
+        if (msg.type === 'joined') {
+          you = msg.you;
+          isOwner = you.name.toLowerCase() === 'owner';
+          if (isOwner) adminPanel.style.display = 'flex';
+        }
+
+        if (msg.type === 'state') {
+          state.users = msg.users || state.users;
+          state.round = msg.round || state.round;
+          updateYou();
+          renderAll();
+        }
+
+        if (msg.type === 'round_spinning') {
+          state.round = msg.round;
+          statusText.textContent = 'Колесо крутится...';
+        }
+
+        if (msg.type === 'game_result') {
+          state.users = msg.users;
+          state.round = msg.round;
+          animateWheelToWinner(msg.round);
+        }
+      };
+
+      ws.onclose = () => {
+        // Можно переподключаться, если нужно
+      };
+
+      ws.onerror = () => {
+        console.warn('WebSocket error');
+      };
+    }
+
+    function updateYou() {
+      if (!state.users) return;
+      const key = Object.keys(state.users).find(
+        k => state.users[k].name.toLowerCase() === username.toLowerCase()
+      );
+      if (key) {
+        you = state.users[key];
+        isOwner = you.name.toLowerCase() === 'owner';
+        balanceValue.textContent = (+you.balance).toFixed(2);
+      }
+    }
+
+    function renderAll() {
+      // игроки
+      playersList.innerHTML = '';
+      const round = state.round || { players: [], status:'collecting' };
+
+      (round.players || []).forEach(p => {
+        const tag = document.createElement('div');
+        tag.className = 'player-tag';
+        tag.style.background = p.color || '#fb8c00';
+        tag.textContent = `${p.name} ${Number(p.bet).toFixed(2)} AZN`;
+        playersList.appendChild(tag);
+      });
+
+      if (round.players.length === 0) {
+        statusText.textContent = 'Сделайте ставку, чтобы участвовать в розыгрыше.';
+      } else if (round.status === 'collecting') {
+        statusText.textContent = 'Ожидаются минимум две ставки для запуска игры.';
+      } else if (round.status === 'waitingOwner') {
+        statusText.textContent = 'Ставки приняты. Ждите, пока OWNER начнёт игру.';
+      } else if (round.status === 'spinning') {
+        statusText.textContent = 'Колесо крутится...';
+      } else if (round.status === 'finished' && round.winner) {
+        statusText.textContent =
+          `Победитель: ${round.winner.name} (+${Number(round.winner.prize).toFixed(2)} AZN)`;
+      }
+
+      if (you) {
+        balanceValue.textContent = (+you.balance).toFixed(2);
+      }
+
+      if (isOwner) adminPanel.style.display = 'flex';
+    }
+
+    function animateWheelToWinner(round) {
+      const players = round.players || [];
+      const winner = round.winner;
+      if (!winner || !players.length) {
+        renderAll();
+        return;
+      }
+
+      // Найти индекс победителя в старом списке игроков,
+      // если его нет — просто обновим состояние без анимации.
+      const idx = winner.winnerIndex ?? players.findIndex(p => p.name === winner.name);
+      if (idx < 0) {
+        renderAll();
+        return;
+      }
+
+      const sector = 360 / players.length;
+      const target = 360 * 5 + sector * idx + 10; // чуть смещаем
+
+      wheel.style.transform = `rotate(${target}deg)`;
+
+      // Через анимацию показываем текст (на всякий случай тоже проставим сразу)
+      statusText.textContent =
+        `Победитель: ${winner.name} (+${Number(winner.prize).toFixed(2)} AZN)`;
+
+      // Обновим "you" и баланс по данным с сервера
+      updateYou();
+    }
+
+    // КНОПКИ
+
+    // Профиль
+    document.getElementById('profileBtn').onclick = () => {
+      if (!you) return;
+      document.getElementById('profileName').textContent = 'Имя: ' + you.name;
+      document.getElementById('profileBalance').textContent =
+        'Баланс: ' + (+you.balance).toFixed(2) + ' AZN';
+      const h = you.history || [];
+      document.getElementById('profileHistory').textContent =
+        h.length ? 'История игр: ' + h.slice(-10).join(' | ')
+                : 'История игр пока пуста.';
+      openPopup(profilePopup);
+    };
+    document.getElementById('profileBackBtn').onclick = () => closePopup(profilePopup);
+
+    // Пополнить (инфа)
+    document.getElementById('depositInfoBtn').onclick = () => openPopup(depositPopup);
+    document.getElementById('depositBackBtn').onclick = () => closePopup(depositPopup);
+
+    // Ставка
+    document.getElementById('betBtn').onclick = () => {
+      if (!you || +you.balance <= 0) {
+        alert('На балансе нет денег. Попросите OWNER пополнить.');
+        return;
+      }
+      betAmountInput.value = '';
+      openPopup(betPopup);
+    };
+    document.getElementById('betCancelBtn').onclick = () => closePopup(betPopup);
+    document.getElementById('betOkBtn').onclick = () => {
+      const val = parseFloat(betAmountInput.value.replace(',', '.'));
+      if (!val || val <= 0) {
+        alert('Введите корректную сумму.');
+        return;
+      }
+      ws.send(JSON.stringify({
+        type: 'place_bet',
+        amount: val
+      }));
+      closePopup(betPopup);
+    };
+
+    // OWNER: изменение баланса
+    let editMode = 'add';
+    const editTitle = document.getElementById('editTitle');
+    const editUserName = document.getElementById('editUserName');
+    const editAmount = document.getElementById('editAmount');
+
+    document.getElementById('addBalanceBtn').onclick = () => {
+      if (!isOwner) return;
+      editMode = 'add';
+      editTitle.textContent = 'Пополнить баланс игрока';
+      editUserName.value = '';
+      editAmount.value = '';
+      openPopup(editBalancePopup);
+    };
+    document.getElementById('subBalanceBtn').onclick = () => {
+      if (!isOwner) return;
+      editMode = 'sub';
+      editTitle.textContent = 'Вычесть деньги у игрока';
+      editUserName.value = '';
+      editAmount.value = '';
+      openPopup(editBalancePopup);
+    };
+    document.getElementById('editCancelBtn').onclick = () => closePopup(editBalancePopup);
+    document.getElementById('editOkBtn').onclick = () => {
+      if (!isOwner) return;
+      const name = editUserName.value.trim();
+      const amount = parseFloat(editAmount.value.replace(',', '.'));
+      if (!name || !amount || amount <= 0) {
+        alert('Введите имя и сумму.');
+        return;
+      }
+      ws.send(JSON.stringify({
+        type: editMode === 'add' ? 'admin_add' : 'admin_sub',
+        target: name,
+        amount
+      }));
+      closePopup(editBalancePopup);
+    };
+
+    // OWNER: старт игры
+    document.getElementById('startGameBtn').onclick = () => {
+      if (!isOwner) return;
+      ws.send(JSON.stringify({ type: 'start_game' }));
+    };
+
+    // Запуск
+    connect();
+  </script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация | Fortune Game</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Poppins',sans-serif;
+      background:#ffffff;
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      overflow:hidden;
+    }
+    .register-container {
+      position:relative;
+      width:420px;
+      height:520px;
+      background:rgba(255,255,255,0.98);
+      border-radius:40px;
+      box-shadow:0 15px 40px rgba(0,0,0,0.16);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .register-container::before {
+      content:'';
+      position:absolute;
+      inset:0;
+      background:url('cf723a8d-c9e7-4d3d-a5a1-0072536d2fdf.png') no-repeat center;
+      background-size:80%;
+      opacity:0.12;
+      z-index:0;
+    }
+    h1 {
+      font-size:28px;
+      font-weight:600;
+      color:#222;
+      z-index:2;
+      margin-bottom:35px;
+      text-shadow:0 1px 2px rgba(0,0,0,0.08);
+    }
+    .input-box {
+      z-index:2;
+      width:80%;
+      margin-bottom:25px;
+    }
+    .input-box input {
+      width:100%;
+      padding:15px 20px;
+      border-radius:999px;
+      border:2px solid #f0f0f0;
+      background:#fafafa;
+      font-size:16px;
+      text-align:center;
+      outline:none;
+      transition:0.3s;
+      color:#222;
+    }
+    .input-box input::placeholder { color:#999; }
+    .input-box input:focus {
+      border-color:#ffa726;
+      box-shadow:0 0 14px rgba(255,167,38,0.35);
+      background:#fff;
+    }
+    .register-btn {
+      z-index:2;
+      background:linear-gradient(135deg,#ffa726,#fb8c00);
+      border:none;
+      border-radius:999px;
+      padding:14px 48px;
+      color:#fff;
+      font-size:18px;
+      font-weight:600;
+      cursor:pointer;
+      transition:all 0.3s ease;
+      box-shadow:0 10px 24px rgba(251,140,0,0.35);
+      margin-bottom:18px;
+    }
+    .register-btn:hover {
+      background:linear-gradient(135deg,#fb8c00,#ef6c00);
+      box-shadow:0 14px 30px rgba(251,140,0,0.45);
+      transform:translateY(-2px);
+    }
+    .hint {
+      z-index:2;
+      font-size:12px;
+      color:#777;
+      text-align:center;
+      padding:0 25px;
+      line-height:1.5;
+    }
+    .error {
+      z-index:2;
+      margin-top:10px;
+      font-size:12px;
+      color:#e53935;
+      min-height:16px;
+    }
+    .brand {
+      position:absolute;
+      bottom:20px;
+      font-size:13px;
+      color:#bbb;
+      z-index:2;
+    }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <h1>Войдите в аккаунт</h1>
+    <div class="input-box">
+      <input type="text" id="username" maxlength="20" placeholder="Введите имя для входа">
+    </div>
+    <button class="register-btn" id="loginBtn">Войти</button>
+    <div class="hint">
+      Имя уникально (Ваня = ВАНЯ).<br>
+      OWNER — особый аккаунт владельца.
+    </div>
+    <div class="error" id="error"></div>
+    <div class="brand">© 2025 Fortune Game</div>
+  </div>
+
+  <script>
+   const WS_URL = 'wss://fortunegame.onrender.com';
+
+    const loginBtn = document.getElementById('loginBtn');
+    const usernameInput = document.getElementById('username');
+    const errorBox = document.getElementById('error');
+
+    loginBtn.onclick = () => {
+      errorBox.textContent = '';
+      const raw = usernameInput.value.trim();
+      if (!raw) {
+        errorBox.textContent = 'Введите имя';
+        return;
+      }
+      const ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: 'register',
+          username: raw
+        }));
+      };
+
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'register_success') {
+          localStorage.setItem('username', msg.username);
+          ws.close();
+          window.location.href = 'fortune.html';
+        } else if (msg.type === 'error') {
+          errorBox.textContent = msg.message || 'Ошибка';
+        }
+      };
+
+      ws.onerror = () => {
+        errorBox.textContent = 'Нет соединения с сервером.';
+      };
+    };
+  </script>
+</body>
+</html>
